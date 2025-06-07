@@ -1,12 +1,12 @@
 /**
  * Configuration for the Medoro client.
- * @typedef {object} MedoroClientConfig
+ * @typedef {object} MedoroDataplaneClientConfig
  * @property {string} origin - The origin URL for the Medoro bucket (e.g., 'https://your-bucket.content-serve.com').
  * @property {CryptoKeyPair} [keyPair] - The Ed25519 CryptoKeyPair for signing requests. Required for authenticated operations.
  * @property {string} [keyId] - The ID of the public key associated with the keyPair. Required for authenticated operations.
  */
 /**
- * @typedef {object} MedoroClientError
+ * @typedef {object} MedoroDataplaneClientError
  * @property {string} type - The category of the error (e.g., 'validation', 'access_denied', 'unknown').
  * @property {string} message - A human-readable message describing the error.
  * @property {string} [code] - An optional error code for programmatic handling.
@@ -16,7 +16,7 @@
  * Medoro JavaScript Client SDK.
  * Provides methods to interact with the Medoro storage service.
  */
-export class MedoroClient {
+export class MedoroDataplaneClient {
     /**
      * Creates an instance of MedoroClient.
      * @param {object} config - The client configuration.
@@ -35,7 +35,7 @@ export class MedoroClient {
      * @param {object} params
      * @param {{ method: string, headers: Headers, url: URL }} params.requestParams - The Request object to sign.
      * @param {(string|{component: '@query-param', parameters: { name: string }})[]} params.signatureInputs - Array of signature components (e.g., ['@method', '@path']).
-     * @returns {Promise<Result<{ signedUrl: URL }, MedoroClientError>>}
+     * @returns {Promise<Result<{ signedUrl: URL }, MedoroDataplaneClientError>>}
      */
     private createSignedUrl;
     /**
@@ -43,7 +43,7 @@ export class MedoroClient {
      * @private
      * @template T - The expected type of the success data.
      * @param {Response} response - The fetch API Response object.
-     * @returns {Promise<Result<{ success: true; data: T; }, MedoroClientError>>}
+     * @returns {Promise<Result<{ success: true; data: T; }, MedoroDataplaneClientError>>}
      */
     private parseJsonResponse;
     /**
@@ -51,33 +51,33 @@ export class MedoroClient {
      * @param {object} params - The parameters for the object upload.
      * @param {string} params.key - The key (path) for the object.
      * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
-     * @param {ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
-     * @returns {Promise<Result<{ key: string, bucket: string, accessControl: string, message: string }, MedoroClientError>>}
+     * @param {import('../lib/schemas/dataplane').ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
+     * @returns {Promise<Result<{ key: string, bucket: string, accessControl: string, message: string }, MedoroDataplaneClientError>>}
      */
     putObject({ key, content, policy }: {
         key: string;
         content: Blob | ArrayBuffer | string;
-        policy: ApiPutRequestValidationPolicy;
+        policy: import("../lib/schemas/dataplane").ApiPutRequestValidationPolicy;
     }): Promise<Result<{
         key: string;
         bucket: string;
         accessControl: string;
         message: string;
-    }, MedoroClientError>>;
+    }, MedoroDataplaneClientError>>;
     /**
      * Retrieves an object from Medoro.
      * @param {object} params - The parameters for retrieving the object.
      * @param {string} params.key - The key (path) of the object to retrieve.
-     * @returns {Promise<Result<Response, MedoroClientError>>}
+     * @returns {Promise<Result<Response, MedoroDataplaneClientError>>}
      */
     getObject({ key }: {
         key: string;
-    }): Promise<Result<Response, MedoroClientError>>;
+    }): Promise<Result<Response, MedoroDataplaneClientError>>;
     /**
      * Deletes an object from Medoro.
      * @param {object} params - The parameters for deleting the object.
      * @param {string} params.key - The key (path) of the object to delete.
-     * @returns {Promise<Result<{ key: string, bucket: string, message: string }, MedoroClientError>>}
+     * @returns {Promise<Result<{ key: string, bucket: string, message: string }, MedoroDataplaneClientError>>}
      */
     deleteObject({ key }: {
         key: string;
@@ -85,13 +85,13 @@ export class MedoroClient {
         key: string;
         bucket: string;
         message: string;
-    }, MedoroClientError>>;
+    }, MedoroDataplaneClientError>>;
     #private;
 }
 /**
  * Configuration for the Medoro client.
  */
-export type MedoroClientConfig = {
+export type MedoroDataplaneClientConfig = {
     /**
      * - The origin URL for the Medoro bucket (e.g., 'https://your-bucket.content-serve.com').
      */
@@ -105,7 +105,7 @@ export type MedoroClientConfig = {
      */
     keyId?: string | undefined;
 };
-export type MedoroClientError = {
+export type MedoroDataplaneClientError = {
     /**
      * - The category of the error (e.g., 'validation', 'access_denied', 'unknown').
      */

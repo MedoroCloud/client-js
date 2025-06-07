@@ -26,26 +26,15 @@ const ApiResponseSchema = z.discriminatedUnion('success', [
 ]);
 
 /**
- * Represents the structure of the API PUT request validation policy.
- * @typedef {object} ApiPutRequestValidationPolicy
- * @property {object} apiPutV1
- * @property {object} apiPutV1.conditions - Conditions for the PUT request.
- * @property {object} [apiPutV1.conditions.content_length] - Content length conditions.
- * @property {number} [apiPutV1.conditions.content_length.lte] - Max content length.
- * @property {string} [apiPutV1.conditions.content_type] - Expected content type.
- * @property {'public' | 'private'} apiPutV1.accessControl - Access control for the object.
- */
-
-/**
  * Configuration for the Medoro client.
- * @typedef {object} MedoroClientConfig
+ * @typedef {object} MedoroDataplaneClientConfig
  * @property {string} origin - The origin URL for the Medoro bucket (e.g., 'https://your-bucket.content-serve.com').
  * @property {CryptoKeyPair} [keyPair] - The Ed25519 CryptoKeyPair for signing requests. Required for authenticated operations.
  * @property {string} [keyId] - The ID of the public key associated with the keyPair. Required for authenticated operations.
  */
 
 /**
- * @typedef {object} MedoroClientError
+ * @typedef {object} MedoroDataplaneClientError
  * @property {string} type - The category of the error (e.g., 'validation', 'access_denied', 'unknown').
  * @property {string} message - A human-readable message describing the error.
  * @property {string} [code] - An optional error code for programmatic handling.
@@ -56,7 +45,7 @@ const ApiResponseSchema = z.discriminatedUnion('success', [
  * Medoro JavaScript Client SDK.
  * Provides methods to interact with the Medoro storage service.
  */
-export class MedoroClient {
+export class MedoroDataplaneClient {
   /**
    * @type {string}
    */
@@ -89,7 +78,7 @@ export class MedoroClient {
    * @param {object} params
    * @param {{ method: string, headers: Headers, url: URL }} params.requestParams - The Request object to sign.
    * @param {(string|{component: '@query-param', parameters: { name: string }})[]} params.signatureInputs - Array of signature components (e.g., ['@method', '@path']).
-   * @returns {Promise<Result<{ signedUrl: URL }, MedoroClientError>>}
+   * @returns {Promise<Result<{ signedUrl: URL }, MedoroDataplaneClientError>>}
    */
   async createSignedUrl({ requestParams, signatureInputs }) {
     const resultOfSigning = await createSignatureForRequest({
@@ -137,7 +126,7 @@ export class MedoroClient {
    * @private
    * @template T - The expected type of the success data.
    * @param {Response} response - The fetch API Response object.
-   * @returns {Promise<Result<{ success: true; data: T; }, MedoroClientError>>}
+   * @returns {Promise<Result<{ success: true; data: T; }, MedoroDataplaneClientError>>}
    */
   async parseJsonResponse(response) {
     // check the content type of the response
@@ -189,8 +178,8 @@ export class MedoroClient {
    * @param {object} params - The parameters for the object upload.
    * @param {string} params.key - The key (path) for the object.
    * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
-   * @param {ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
-   * @returns {Promise<Result<{ key: string, bucket: string, accessControl: string, message: string }, MedoroClientError>>}
+   * @param {import('../lib/schemas/dataplane').ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
+   * @returns {Promise<Result<{ key: string, bucket: string, accessControl: string, message: string }, MedoroDataplaneClientError>>}
    */
   async putObject({ key, content, policy }) {
     const policyBase64 = btoa(JSON.stringify(policy));
@@ -251,7 +240,7 @@ export class MedoroClient {
    * Retrieves an object from Medoro.
    * @param {object} params - The parameters for retrieving the object.
    * @param {string} params.key - The key (path) of the object to retrieve.
-   * @returns {Promise<Result<Response, MedoroClientError>>}
+   * @returns {Promise<Result<Response, MedoroDataplaneClientError>>}
    */
   async getObject({ key }) {
     const requestUrl = new URL(key, this.#origin);
@@ -304,7 +293,7 @@ export class MedoroClient {
    * Deletes an object from Medoro.
    * @param {object} params - The parameters for deleting the object.
    * @param {string} params.key - The key (path) of the object to delete.
-   * @returns {Promise<Result<{ key: string, bucket: string, message: string }, MedoroClientError>>}
+   * @returns {Promise<Result<{ key: string, bucket: string, message: string }, MedoroDataplaneClientError>>}
    */
   async deleteObject({ key }) {
     const requestUrl = new URL(key, this.#origin);

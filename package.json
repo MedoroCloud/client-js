@@ -8,7 +8,7 @@
   "scripts": {
     "types": "tsc",
     "test": "node --test tests/index.test.js",
-    "coverage": "node --experimental-test-coverage --test tests/index.test.js"
+    "coverage": "node --experimental-test-coverage --test tests/dataplane/index.test.js"
   },
   "repository": {
     "type": "git",

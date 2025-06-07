@@ -1,10 +1,10 @@
 import assert from 'node:assert';
 import { test, before, after, beforeEach, afterEach } from 'node:test';
-import { MedoroClient } from '../src/index.js';
+import { MedoroDataplaneClient } from '../../src/dataplane/index.js';
 import { ok, err } from 'neverthrow';
 
 test.suite('MedoroClient', () => {
-  /** @type {MedoroClient} */
+  /** @type {MedoroDataplaneClient} */
   let client;
   /** @type {import('node:test').Mock<typeof global.fetch>} */
   let fetchStub;
@@ -16,7 +16,7 @@ test.suite('MedoroClient', () => {
       ['sign', 'verify']
     );
 
-    client = new MedoroClient({
+    client = new MedoroDataplaneClient({
       origin: 'https://test-bucket.content-serve.com',
       privateKey: keyPair.privateKey,
       keyId: 'test-key-id',
@@ -49,7 +49,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
@@ -73,7 +73,7 @@ test.suite('MedoroClient', () => {
     });
 
     test('should return an error if authentication is missing for signed request', async () => {
-      const unauthenticatedClient = new MedoroClient({
+      const unauthenticatedClient = new MedoroDataplaneClient({
         origin: 'https://test-bucket.content-serve.com',
         privateKey: null,
         keyId: null,
@@ -81,7 +81,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
@@ -101,7 +101,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
@@ -126,7 +126,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
