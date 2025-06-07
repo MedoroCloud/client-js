@@ -1,0 +1,29 @@
+{
+  "name": "@medorocloud/client",
+  "version": "0.1.0",
+  "description": "JavaScript client to work with files stored on Medoro object storage.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MedoroCloud/client-js.git"
+  },
+  "keywords": [
+    "object",
+    "storage",
+    "files",
+    "s3",
+    "storage",
+    "medoro",
+    "medorocloud",
+    "cloud"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MedoroCloud/client-js/issues"
+  },
+  "homepage": "https://github.com/MedoroCloud/client-js#readme"
+}
