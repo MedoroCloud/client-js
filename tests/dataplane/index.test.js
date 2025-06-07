@@ -49,7 +49,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
@@ -81,7 +81,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
@@ -101,7 +101,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },
@@ -126,7 +126,7 @@ test.suite('MedoroClient', () => {
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
-      /** @type {import('../../src/lib/schemas/dataplane').ApiPutRequestValidationPolicy} */
+      /** @type {import('../../src/lib/schemas').ApiPutRequestValidationPolicy} */
       const policy = {
         apiPutV1: {
           conditions: { content_length: { lte: 100 }, content_type: 'text/plain' },

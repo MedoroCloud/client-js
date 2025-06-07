@@ -51,13 +51,13 @@ export class MedoroDataplaneClient {
      * @param {object} params - The parameters for the object upload.
      * @param {string} params.key - The key (path) for the object.
      * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
-     * @param {import('../lib/schemas/dataplane').ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
+     * @param {import('../lib/schemas').ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
      * @returns {Promise<Result<{ key: string, bucket: string, accessControl: string, message: string }, MedoroDataplaneClientError>>}
      */
     putObject({ key, content, policy }: {
         key: string;
         content: Blob | ArrayBuffer | string;
-        policy: import("../lib/schemas/dataplane").ApiPutRequestValidationPolicy;
+        policy: import("../lib/schemas").ApiPutRequestValidationPolicy;
     }): Promise<Result<{
         key: string;
         bucket: string;
