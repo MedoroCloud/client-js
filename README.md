@@ -42,8 +42,6 @@ const client = new MedoroDataplaneClient({
   privateKey: keyPair.privateKey,
   keyId: 'your-key-id',
 });
-
-
 ```
 
 ### `putObject` - Uploading an Object
