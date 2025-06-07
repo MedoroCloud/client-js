@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "types": "tsc",
-    "test": "node --test tests/index.test.js",
+    "test": "node --test tests/dataplane/index.test.js",
     "coverage": "node --experimental-test-coverage --test tests/dataplane/index.test.js"
   },
   "exports": {
