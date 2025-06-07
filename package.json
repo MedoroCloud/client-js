@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "description": "JavaScript client to work with files stored on Medoro object storage.",
   "main": "src/index.js",
+  "type": "module",
   "scripts": {
-    "test": "node --test"
+    "types": "tsc",
+    "test": "node --test tests",
+    "coverage": "node --test tests --experimental-test-coverage"
   },
   "repository": {
     "type": "git",
@@ -25,5 +28,12 @@
   "bugs": {
     "url": "https://github.com/MedoroCloud/client-js/issues"
   },
-  "homepage": "https://github.com/MedoroCloud/client-js#readme"
+  "homepage": "https://github.com/MedoroCloud/client-js#readme",
+  "dependencies": {
+    "http-msg-sig": "^0.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
 }
