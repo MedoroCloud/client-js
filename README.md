@@ -57,8 +57,8 @@ const result = await client.putObject({
   content,
   policy: {
     apiPutV1: {
-      conditions: { content_length: { lte: 1024 }, content_type: 'text/plain' },
-      accessControl: 'public-read',
+      conditions: { 'Content-Length': { lte: 1024 }, 'Content-Type': 'text/plain' },
+      accessControl: 'public',
     },
   },
 });
