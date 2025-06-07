@@ -188,9 +188,9 @@ test.suite('MedoroClient', () => {
       const mockDeleteResponse = {
         success: true,
         data: {
-        key: 'test-key',
-        bucket: 'test-bucket',
-        message: 'Object deleted successfully',
+          key: 'test-key',
+          bucket: 'test-bucket',
+          message: 'Object deleted successfully',
         }
       };
       fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockDeleteResponse), { status: 200, ok: true })));

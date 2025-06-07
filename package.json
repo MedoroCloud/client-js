@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "JavaScript client to work with files stored on Medoro object storage.",
   "main": "src/index.js",
+  "types": "types/index.d.ts",
   "type": "module",
   "scripts": {
     "types": "tsc",
-    "test": "node --test test",
-    "coverage": "node --test tests --experimental-test-coverage"
+    "test": "node --test tests/index.test.js",
+    "coverage": "node --experimental-test-coverage --test tests/index.test.js"
   },
   "repository": {
     "type": "git",
