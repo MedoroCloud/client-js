@@ -1,5 +1,5 @@
 {
-  "name": "@medorocloud/client",
+  "name": "@medoro/client",
   "version": "0.2.0",
   "description": "JavaScript client to work with files stored on Medoro object storage.",
   "main": "src/index.js",
