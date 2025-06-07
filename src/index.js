@@ -1,5 +1,5 @@
 import { Result, ResultAsync, ok, err } from 'neverthrow';
-import { createSignatureForRequest as createSignatureFromHttpMsgSig } from 'http-msg-sig';
+import { createSignatureForRequest } from 'http-msg-sig';
 import { z } from 'zod/v4';
 
 // Schema for success responses
@@ -84,22 +84,23 @@ export class MedoroClient {
   }
 
   /**
-   * Signs a request with the provided key pair using http-msg-sig.
+   * Signs a request with the provided key pair using http-msg-sig and returns the signed URL.
    * @private
    * @param {object} params
-   * @param {Request} params.request - The Request object to sign.
-   * @param {URL} params.url - The URL object to sign.
+   * @param {{ method: string, headers: Headers, url: URL }} params.requestParams - The Request object to sign.
    * @param {(string|{component: '@query-param', parameters: { name: string }})[]} params.signatureInputs - Array of signature components (e.g., ['@method', '@path']).
-   * @returns {Promise<Result<Request, MedoroClientError>>}
+   * @returns {Promise<Result<{ signedUrl: URL }, MedoroClientError>>}
    */
-  async authenticateRequest({ request, url, signatureInputs }) {
-    const processedRequest = { ...request, url };
-
-    const result = await createSignatureFromHttpMsgSig({
+  async createSignedUrl({ requestParams, signatureInputs }) {
+    const resultOfSigning = await createSignatureForRequest({
       signatureInputs,
       signatureLabel: 'medoro',
       additionalParams: { keyid: this.#keyId, alg: 'ed25519', created: Math.floor(Date.now() / 1000) },
-      request: processedRequest,
+      request: {
+        url: requestParams.url,
+        headers: requestParams.headers,
+        method: requestParams.method,
+      },
       sign: async ({ signatureBase, ok, err }) => {
         const signatureResult = await ResultAsync.fromPromise(
           crypto.subtle.sign(
@@ -112,24 +113,23 @@ export class MedoroClient {
             message: `Failed to sign request: ${e instanceof Error ? e.message : String(e)}`,
           }),
         );
-
         if (signatureResult.isOk()) {
           return ok(signatureResult.value);
-        } else {
-          return err(signatureResult.error);
         }
+        return err(signatureResult.error);
       },
     });
 
-    if (result.isErr()) {
-      return err(result.error);
+    if (resultOfSigning.isErr()) {
+      return err(resultOfSigning.error);
     }
 
-    const { signatureInput, signature } = result.value;
-    url.searchParams.set('x-medoro-signature-input', signatureInput);
-    url.searchParams.set('x-medoro-signature', signature);
+    const { signatureInput, signature } = resultOfSigning.value;
+    const signedUrl = new URL(requestParams.url);
+    signedUrl.searchParams.set('x-medoro-signature-input', signatureInput);
+    signedUrl.searchParams.set('x-medoro-signature', signature);
 
-    return ok(new Request(url, request));
+    return ok({ signedUrl });
   }
 
   /**
@@ -197,28 +197,30 @@ export class MedoroClient {
 
     const requestUrl = new URL(key, this.#origin);
     requestUrl.searchParams.append('x-medoro-policy', policyBase64);
-    const request = new Request(requestUrl, {
-      method: 'PUT',
-      headers: headers,
-      body: content,
-    });
 
-    const resultOfAuthenticatedRequest = await this.authenticateRequest({
-      request,
-      url: requestUrl,
+    const resultOfSignedUrl = await this.createSignedUrl({
+      requestParams: {
+        method: 'PUT',
+        headers,
+        url: requestUrl,
+      },
       signatureInputs: ['@method', '@scheme', '@authority', '@path', { component: '@query-param', parameters: { name: 'x-medoro-policy' } }],
     });
-    if (resultOfAuthenticatedRequest.isErr()) {
+    if (resultOfSignedUrl.isErr()) {
       return err({
         type: 'signature_error',
-        message: resultOfAuthenticatedRequest.error.message,
-        code: resultOfAuthenticatedRequest.error.code,
-        context: resultOfAuthenticatedRequest.error.context,
+        message: resultOfSignedUrl.error.message,
+        code: resultOfSignedUrl.error.code,
+        context: resultOfSignedUrl.error.context,
       })
     }
 
     const resultOfResponse = await ResultAsync.fromPromise(
-      fetch(resultOfAuthenticatedRequest.value),
+      fetch(resultOfSignedUrl.value.signedUrl, {
+        method: 'PUT',
+        headers,
+        body: content,
+      }),
       (e) => ({
         type: 'network_error',
         message: `Network error during PUT: ${e instanceof Error ? e.message : String(e)}`,
@@ -244,11 +246,14 @@ export class MedoroClient {
    */
   async getObject({ key }) {
     const requestUrl = new URL(key, this.#origin);
-    const request = new Request(requestUrl, { method: 'GET' });
-
-    const resultOfAuthenticatedRequest = await this.authenticateRequest({
-      request,
+    const requestParams = {
+      method: 'GET',
+      headers: new Headers(),
       url: requestUrl,
+    };
+
+    const resultOfAuthenticatedRequest = await this.createSignedUrl({
+      requestParams,
       signatureInputs: ['@method', '@scheme', '@authority', '@path'],
     });
     if (resultOfAuthenticatedRequest.isErr()) {
@@ -256,7 +261,10 @@ export class MedoroClient {
     }
 
     const resultOfResponse = await ResultAsync.fromPromise(
-      fetch(resultOfAuthenticatedRequest.value),
+      fetch(resultOfAuthenticatedRequest.value.signedUrl, {
+        method: 'GET',
+        headers: requestParams.headers,
+      }),
       (e) => ({
         type: 'network_error',
         message: `Network error during GET: ${e instanceof Error ? e.message : String(e)}`,
@@ -291,11 +299,14 @@ export class MedoroClient {
    */
   async deleteObject({ key }) {
     const requestUrl = new URL(key, this.#origin);
-    const request = new Request(requestUrl, { method: 'DELETE' });
-
-    const resultOfAuthenticatedRequest = await this.authenticateRequest({
-      request,
+    const requestParams = {
+      method: 'DELETE',
+      headers: new Headers(),
       url: requestUrl,
+    };
+
+    const resultOfAuthenticatedRequest = await this.createSignedUrl({
+      requestParams,
       signatureInputs: ['@method', '@scheme', '@authority', '@path'],
     });
     if (resultOfAuthenticatedRequest.isErr()) {
@@ -303,7 +314,10 @@ export class MedoroClient {
     }
 
     const resultOfResponse = await ResultAsync.fromPromise(
-      fetch(resultOfAuthenticatedRequest.value),
+      fetch(resultOfAuthenticatedRequest.value.signedUrl, {
+        method: 'DELETE',
+        headers: requestParams.headers,
+      }),
       (e) => ({
         type: 'network_error',
         message: `Network error during DELETE: ${e instanceof Error ? e.message : String(e)}`,

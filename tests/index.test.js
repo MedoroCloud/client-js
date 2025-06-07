@@ -34,15 +34,15 @@ test.suite('MedoroClient', () => {
       const mockPutResponse = {
         success: true,
         data: {
-          key: 'test-key',
+          key: '/test-key',
           bucket: 'test-bucket',
           accessControl: 'public',
           message: 'Object uploaded successfully',
         }
       };
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockPutResponse), { status: 200, ok: true })));
+      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockPutResponse), { status: 200 })));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const content = 'Hello Medoro!';
       /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
       const policy = {
@@ -56,13 +56,15 @@ test.suite('MedoroClient', () => {
       assert.deepStrictEqual(result, ok(mockPutResponse.data));
       assert.strictEqual(fetchStub.mock.callCount(), 1);
 
-      const request = fetchStub.mock.calls[0].arguments[0];
-      assert.ok(request instanceof Request);
-      assert.strictEqual(request.method, 'PUT');
-      assert.ok(request.url.includes(`https://test-bucket.content-serve.com/${key}`));
-      assert.ok(request.url.includes('x-medoro-policy='));
-      assert.ok(request.url.includes('x-medoro-signature-input='));
-      assert.ok(request.url.includes('x-medoro-signature='));
+      const [requestUrl, requestInit] = fetchStub.mock.calls[0].arguments;
+      assert.ok(requestUrl instanceof URL);
+      assert.ok(typeof requestInit !== 'undefined');
+      assert.strictEqual(requestInit.method, 'PUT');
+      assert.equal(requestUrl.origin, 'https://test-bucket.content-serve.com');
+      assert.equal(requestUrl.pathname, key);
+      assert.ok(requestUrl.searchParams.has('x-medoro-policy'));
+      assert.ok(requestUrl.searchParams.has('x-medoro-signature-input'));
+      assert.ok(requestUrl.searchParams.has('x-medoro-signature'));
     });
 
     test('should return an error if authentication is missing for signed request', async () => {
@@ -72,7 +74,7 @@ test.suite('MedoroClient', () => {
         keyId: null,
       });
 
-      const key = 'test-key';
+      const key = '/test-key';
       const content = 'Hello Medoro!';
       /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
       const policy = {
@@ -92,7 +94,7 @@ test.suite('MedoroClient', () => {
     test('should return an error for network issues', async () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.reject(new TypeError('Network request failed')));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const content = 'Hello Medoro!';
       /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
       const policy = {
@@ -112,7 +114,7 @@ test.suite('MedoroClient', () => {
     test('should return an API error for non-ok responses', async () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: false, error: { type: 'api_error', message: 'Unauthorized', code: '401' } }), { status: 401, statusText: 'Unauthorized' })));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const content = 'Hello Medoro!';
       /** @type {import('../src/index.js').ApiPutRequestValidationPolicy} */
       const policy = {
@@ -134,9 +136,9 @@ test.suite('MedoroClient', () => {
   test.suite('getObject', () => {
     test('should successfully retrieve an object', async () => {
       const mockBlob = new Blob(['mock content'], { type: 'text/plain' });
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(mockBlob, { status: 200, ok: true })));
+      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(mockBlob, { status: 200 })));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const result = await client.getObject({ key });
       assert.ok(result.isOk());
       assert.ok(result.value instanceof Response);
@@ -146,22 +148,23 @@ test.suite('MedoroClient', () => {
 
     test('should retrieve an authenticated object', async () => {
       const mockBlob = new Blob(['mock content'], { type: 'text/plain' });
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(mockBlob, { status: 200, ok: true })));
+      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(mockBlob, { status: 200 })));
 
-      const key = 'test-key';
-      const result = await client.getObject({ key, authenticated: true });
+      const key = '/test-key';
+      const result = await client.getObject({ key });
       assert.ok(result.isOk());
       assert.strictEqual(fetchStub.mock.callCount(), 1);
 
-      const request = fetchStub.mock.calls[0].arguments[0];
-      assert.ok(request.url.includes('x-medoro-signature-input='));
-      assert.ok(request.url.includes('x-medoro-signature='));
+      const [requestUrl, requestInit] = fetchStub.mock.calls[0].arguments;
+      assert.ok(requestUrl instanceof URL);
+      assert.ok(requestUrl.searchParams.has('x-medoro-signature-input'));
+      assert.ok(requestUrl.searchParams.has('x-medoro-signature'));
     });
 
     test('should return an API error for non-ok responses', async () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: false, error: { type: 'api_error', message: 'Not Found', code: '404' } }), { status: 404, statusText: 'Not Found' })));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const result = await client.getObject({ key });
       assert.ok(result.isErr());
       assert.deepStrictEqual(result.error, {
@@ -174,7 +177,7 @@ test.suite('MedoroClient', () => {
     test('should return an error for network issues during get', async () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.reject(new TypeError('Network error during GET')));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const result = await client.getObject({ key });
       assert.deepStrictEqual(result, err({
         type: 'network_error',
@@ -188,23 +191,27 @@ test.suite('MedoroClient', () => {
       const mockDeleteResponse = {
         success: true,
         data: {
-          key: 'test-key',
+          key: '/test-key',
           bucket: 'test-bucket',
           message: 'Object deleted successfully',
         }
       };
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockDeleteResponse), { status: 200, ok: true })));
+      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockDeleteResponse), { status: 200 })));
 
-      const key = 'test-key';
+      const key = '/test-key';
       const result = await client.deleteObject({ key });
       assert.deepStrictEqual(result, ok(mockDeleteResponse.data));
       assert.strictEqual(fetchStub.mock.callCount(), 1);
 
-      const request = fetchStub.mock.calls[0].arguments[0];
-      assert.strictEqual(request.method, 'DELETE');
-      assert.ok(request.url.includes(`https://test-bucket.content-serve.com/${key}`));
-      assert.ok(request.url.includes('x-medoro-signature-input='));
-      assert.ok(request.url.includes('x-medoro-signature='));
+      const [requestUrl, requestInit] = fetchStub.mock.calls[0].arguments;
+      assert.ok(requestUrl instanceof URL);
+      assert.ok(typeof requestInit !== 'undefined');
+      assert.ok('method' in requestInit);
+      assert.strictEqual(requestInit.method, 'DELETE');
+      assert.ok(requestUrl.origin === 'https://test-bucket.content-serve.com');
+      assert.ok(requestUrl.pathname === key);
+      assert.ok(requestUrl.searchParams.has('x-medoro-signature-input'));
+      assert.ok(requestUrl.searchParams.has('x-medoro-signature'));
     });
 
     test('should return an API error for non-ok responses', async () => {
