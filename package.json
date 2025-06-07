@@ -1,6 +1,6 @@
 {
   "name": "@medoro/client",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "JavaScript client to work with files stored on Medoro object storage.",
   "main": "src/dataplane/index.js",
   "type": "module",
