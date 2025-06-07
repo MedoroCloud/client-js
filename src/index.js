@@ -84,30 +84,6 @@ export class MedoroClient {
   }
 
   /**
-   * Helper to convert a base64 string to a Uint8Array.
-   * @param {string} base64 - The base64 string.
-   * @returns {Uint8Array}
-   */
-  base64ToUint8Array(base64) {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  /**
-   * Helper to convert a Uint8Array to a base64 string.
-   * @param {Uint8Array} uint8Array - The Uint8Array.
-   * @returns {string}
-   */
-  uint8ArrayToBase64(uint8Array) {
-    return btoa(String.fromCharCode(...uint8Array));
-  }
-
-  /**
    * Signs a request with the provided key pair using http-msg-sig.
    * @private
    * @param {object} params
