@@ -40,7 +40,12 @@ test.suite('MedoroClient', () => {
           message: 'Object uploaded successfully',
         }
       };
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockPutResponse), { status: 200 })));
+      fetchStub.mock.mockImplementationOnce(
+        () => Promise.resolve(new Response(
+          JSON.stringify(mockPutResponse),
+          { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' } },
+        )),
+      );
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
@@ -112,7 +117,12 @@ test.suite('MedoroClient', () => {
     });
 
     test('should return an API error for non-ok responses', async () => {
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: false, error: { type: 'api_error', message: 'Unauthorized', code: '401' } }), { status: 401, statusText: 'Unauthorized' })));
+      fetchStub.mock.mockImplementationOnce(
+        () => Promise.resolve(new Response(
+          JSON.stringify({ success: false, error: { type: 'api_error', message: 'Unauthorized', code: '401' } }),
+          { status: 401, statusText: 'Unauthorized', headers: { 'content-type': 'application/json' } },
+        )),
+      );
 
       const key = '/test-key';
       const content = 'Hello Medoro!';
@@ -162,7 +172,12 @@ test.suite('MedoroClient', () => {
     });
 
     test('should return an API error for non-ok responses', async () => {
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: false, error: { type: 'api_error', message: 'Not Found', code: '404' } }), { status: 404, statusText: 'Not Found' })));
+      fetchStub.mock.mockImplementationOnce(
+        () => Promise.resolve(new Response(
+          JSON.stringify({ success: false, error: { type: 'api_error', message: 'Not Found', code: '404' } }),
+          { status: 404, statusText: 'Not Found', headers: { 'content-type': 'application/json' } },
+        )),
+      );
 
       const key = '/test-key';
       const result = await client.getObject({ key });
@@ -196,7 +211,11 @@ test.suite('MedoroClient', () => {
           message: 'Object deleted successfully',
         }
       };
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify(mockDeleteResponse), { status: 200 })));
+      fetchStub.mock.mockImplementationOnce(
+        () => Promise.resolve(new Response(
+          JSON.stringify(mockDeleteResponse),
+          { status: 200, statusText: 'OK', headers: { 'content-type': 'application/json' } },
+        )));
 
       const key = '/test-key';
       const result = await client.deleteObject({ key });
@@ -215,7 +234,12 @@ test.suite('MedoroClient', () => {
     });
 
     test('should return an API error for non-ok responses', async () => {
-      fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: false, error: { type: 'api_error', message: 'Forbidden', code: '403' } }), { status: 403, statusText: 'Forbidden' })));
+      fetchStub.mock.mockImplementationOnce(
+        () => Promise.resolve(new Response(
+          JSON.stringify({ success: false, error: { type: 'api_error', message: 'Forbidden', code: '403' } }),
+          { status: 403, statusText: 'Forbidden', headers: { 'content-type': 'application/json' } },
+        )),
+      );
 
       const key = 'test-key';
       const result = await client.deleteObject({ key });
@@ -227,7 +251,9 @@ test.suite('MedoroClient', () => {
     });
 
     test('should return an error for network issues during delete', async () => {
-      fetchStub.mock.mockImplementationOnce(() => Promise.reject(new TypeError('Network error during DELETE')));
+      fetchStub.mock.mockImplementationOnce(
+        () => Promise.reject(new TypeError('Network error during DELETE')),
+      );
 
       const key = 'test-key';
       const result = await client.deleteObject({ key });

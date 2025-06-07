@@ -140,6 +140,15 @@ export class MedoroClient {
    * @returns {Promise<Result<{ success: true; data: T; }, MedoroClientError>>}
    */
   async parseJsonResponse(response) {
+    // check the content type of the response
+    if (!response.headers.get('content-type')?.includes('application/json')) {
+      return err({
+        type: 'json_parse_error',
+        message: 'Response is not JSON',
+        context: { status: response.status, statusText: response.statusText, contentType: response.headers.get('content-type'), content: await response.text() },
+      });
+    }
+
     const responseJsonResult = await ResultAsync.fromPromise(
       response.json(),
       (e) => ({
