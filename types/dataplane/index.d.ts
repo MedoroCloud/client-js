@@ -1,17 +1,54 @@
-/**
- * Configuration for the Medoro client.
- * @typedef {object} MedoroDataplaneClientConfig
- * @property {string} origin - The origin URL for the Medoro bucket (e.g., 'https://your-bucket.content-serve.com').
- * @property {CryptoKeyPair} [keyPair] - The Ed25519 CryptoKeyPair for signing requests. Required for authenticated operations.
- * @property {string} [keyId] - The ID of the public key associated with the keyPair. Required for authenticated operations.
- */
-/**
- * @typedef {object} MedoroDataplaneClientError
- * @property {string} type - The category of the error (e.g., 'validation', 'access_denied', 'unknown').
- * @property {string} message - A human-readable message describing the error.
- * @property {string} [code] - An optional error code for programmatic handling.
- * @property {unknown} [context] - Optional additional context for the error.
- */
+export class PutObjectCommand extends MedoroDataplaneCommand {
+    /**
+     * @param {object} params
+     * @param {string} params.key - The key (path) for the request.
+     * @param {import('../lib/schemas').ApiPutRequestValidationPolicy} params.policy - The validation policy for the request.
+     * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
+     */
+    constructor({ key, policy, content }: {
+        key: string;
+        policy: import("../lib/schemas").ApiPutRequestValidationPolicy;
+        content: Blob | ArrayBuffer | string;
+    });
+    get policy(): {
+        apiPutV1: {
+            conditions: Record<string, string | number | {
+                startsWith: string;
+            } | {
+                endsWith: string;
+            } | {
+                lte: number;
+            } | {
+                gte: number;
+            } | {
+                oneOf: (string | number)[];
+            } | {
+                range: [number, number];
+            }>;
+            accessControl: "public" | "private";
+        };
+    };
+    get content(): string | Blob | ArrayBuffer;
+    #private;
+}
+export class GetObjectCommand extends MedoroDataplaneCommand {
+    /**
+     * @param {object} params
+     * @param {string} params.key - The key (path) for the request.
+     */
+    constructor({ key }: {
+        key: string;
+    });
+}
+export class DeleteObjectCommand extends MedoroDataplaneCommand {
+    /**
+     * @param {object} params
+     * @param {string} params.key - The key (path) for the request.
+     */
+    constructor({ key }: {
+        key: string;
+    });
+}
 /**
  * Medoro JavaScript Client SDK.
  * Provides methods to interact with the Medoro storage service.
@@ -31,13 +68,15 @@ export class MedoroDataplaneClient {
     });
     /**
      * Signs a request with the provided key pair using http-msg-sig and returns the signed URL.
-     * @private
      * @param {object} params
-     * @param {{ method: string, headers: Headers, url: URL }} params.requestParams - The Request object to sign.
-     * @param {(string|{component: '@query-param', parameters: { name: string }})[]} params.signatureInputs - Array of signature components (e.g., ['@method', '@path']).
+     * @param {MedoroDataplaneCommand} params.command - The Command object to sign.
      * @returns {Promise<Result<{ signedUrl: URL }, MedoroDataplaneClientError>>}
      */
-    private createSignedUrl;
+    createSignedUrl({ command }: {
+        command: MedoroDataplaneCommand;
+    }): Promise<Result<{
+        signedUrl: URL;
+    }, MedoroDataplaneClientError>>;
     /**
      * Parses a JSON response from the Medoro API, handling success and error formats.
      * @private
@@ -47,45 +86,14 @@ export class MedoroDataplaneClient {
      */
     private parseJsonResponse;
     /**
-     * Uploads an object to Medoro.
-     * @param {object} params - The parameters for the object upload.
-     * @param {string} params.key - The key (path) for the object.
-     * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
-     * @param {import('../lib/schemas').ApiPutRequestValidationPolicy} params.policy - The validation policy for the PUT request.
-     * @returns {Promise<Result<{ key: string, bucket: string, accessControl: string, message: string }, MedoroDataplaneClientError>>}
-     */
-    putObject({ key, content, policy }: {
-        key: string;
-        content: Blob | ArrayBuffer | string;
-        policy: import("../lib/schemas").ApiPutRequestValidationPolicy;
-    }): Promise<Result<{
-        key: string;
-        bucket: string;
-        accessControl: string;
-        message: string;
-    }, MedoroDataplaneClientError>>;
-    /**
-     * Retrieves an object from Medoro.
-     * @param {object} params - The parameters for retrieving the object.
-     * @param {string} params.key - The key (path) of the object to retrieve.
+     * Sends a Command to Medoro.
+     * @param {object} params - The parameters for the request.
+     * @param {MedoroDataplaneCommand} params.command - The Command object to send.
      * @returns {Promise<Result<Response, MedoroDataplaneClientError>>}
      */
-    getObject({ key }: {
-        key: string;
+    send({ command }: {
+        command: MedoroDataplaneCommand;
     }): Promise<Result<Response, MedoroDataplaneClientError>>;
-    /**
-     * Deletes an object from Medoro.
-     * @param {object} params - The parameters for deleting the object.
-     * @param {string} params.key - The key (path) of the object to delete.
-     * @returns {Promise<Result<{ key: string, bucket: string, message: string }, MedoroDataplaneClientError>>}
-     */
-    deleteObject({ key }: {
-        key: string;
-    }): Promise<Result<{
-        key: string;
-        bucket: string;
-        message: string;
-    }, MedoroDataplaneClientError>>;
     #private;
 }
 /**
@@ -123,4 +131,36 @@ export type MedoroDataplaneClientError = {
      */
     context?: unknown;
 };
+/**
+ * Configuration for the Medoro client.
+ * @typedef {object} MedoroDataplaneClientConfig
+ * @property {string} origin - The origin URL for the Medoro bucket (e.g., 'https://your-bucket.content-serve.com').
+ * @property {CryptoKeyPair} [keyPair] - The Ed25519 CryptoKeyPair for signing requests. Required for authenticated operations.
+ * @property {string} [keyId] - The ID of the public key associated with the keyPair. Required for authenticated operations.
+ */
+/**
+ * @typedef {object} MedoroDataplaneClientError
+ * @property {string} type - The category of the error (e.g., 'validation', 'access_denied', 'unknown').
+ * @property {string} message - A human-readable message describing the error.
+ * @property {string} [code] - An optional error code for programmatic handling.
+ * @property {unknown} [context] - Optional additional context for the error.
+ */
+declare class MedoroDataplaneCommand {
+    /**
+     * @param {object} params
+     * @param {'PUT' | 'GET' | 'DELETE'} params.method - The HTTP method for the request.
+     * @param {Headers} [params.headers] - The headers for the request.
+     * @param {string} params.key - The key (path) for the request.
+     */
+    constructor({ method, headers, key }: {
+        method: "PUT" | "GET" | "DELETE";
+        headers?: Headers | undefined;
+        key: string;
+    });
+    get method(): "PUT" | "GET" | "DELETE";
+    get key(): string;
+    get headers(): Headers;
+    #private;
+}
 import { Result } from 'neverthrow';
+export {};

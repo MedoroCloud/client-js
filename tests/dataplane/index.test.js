@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { test, before, after, beforeEach, afterEach } from 'node:test';
-import { MedoroDataplaneClient } from '../../src/dataplane/index.js';
+import { MedoroDataplaneClient, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '../../src/dataplane/index.js';
 import { ok, err } from 'neverthrow';
 
 test.suite('MedoroClient', () => {
@@ -57,7 +57,8 @@ test.suite('MedoroClient', () => {
         },
       };
 
-      const result = await client.putObject({ key, content, policy });
+      const command = new PutObjectCommand({ key, content, policy });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, ok(mockPutResponse.data));
       assert.strictEqual(fetchStub.mock.callCount(), 1);
 
@@ -70,6 +71,7 @@ test.suite('MedoroClient', () => {
       assert.ok(requestUrl.searchParams.has('x-medoro-policy'));
       assert.ok(requestUrl.searchParams.has('x-medoro-signature-input'));
       assert.ok(requestUrl.searchParams.has('x-medoro-signature'));
+      assert.strictEqual(requestInit.body, content);
     });
 
     test('should return an error if authentication is missing for signed request', async () => {
@@ -89,9 +91,10 @@ test.suite('MedoroClient', () => {
         },
       };
 
-      const result = await unauthenticatedClient.putObject({ key, content, policy });
+      const command = new PutObjectCommand({ key, content, policy });
+      const result = await unauthenticatedClient.send({ command });
       assert.ok(result.isErr());
-      assert.deepStrictEqual(result.error.type, 'signature_error');
+      assert.deepStrictEqual(result.error.type, 'encoding');
       assert.deepStrictEqual(result.error.message, 'Failed to encode signature input dictionary');
       assert.deepStrictEqual(result.error.code, undefined);
     });
@@ -109,7 +112,8 @@ test.suite('MedoroClient', () => {
         },
       };
 
-      const result = await client.putObject({ key, content, policy });
+      const command = new PutObjectCommand({ key, content, policy });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, err({
         type: 'network_error',
         message: 'Network error during PUT: Network request failed',
@@ -134,11 +138,13 @@ test.suite('MedoroClient', () => {
         },
       };
 
-      const result = await client.putObject({ key, content, policy });
+      const command = new PutObjectCommand({ key, content, policy });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, err({
         type: 'api_error',
         message: 'Unauthorized',
         code: '401',
+        context: 'Unauthorized',
       }));
     });
   });
@@ -149,11 +155,14 @@ test.suite('MedoroClient', () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(mockBlob, { status: 200 })));
 
       const key = '/test-key';
-      const result = await client.getObject({ key });
+      const consoleStub = test.mock.method(console, 'error', () => {});
+      const command = new GetObjectCommand({ key });
+      const result = await client.send({ command });
       assert.ok(result.isOk());
       assert.ok(result.value instanceof Response);
       assert.strictEqual(result.value.status, 200);
       assert.strictEqual(await result.value.text(), 'mock content');
+      consoleStub.mock.restore();
     });
 
     test('should retrieve an authenticated object', async () => {
@@ -161,7 +170,8 @@ test.suite('MedoroClient', () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.resolve(new Response(mockBlob, { status: 200 })));
 
       const key = '/test-key';
-      const result = await client.getObject({ key });
+      const command = new GetObjectCommand({ key });
+      const result = await client.send({ command });
       assert.ok(result.isOk());
       assert.strictEqual(fetchStub.mock.callCount(), 1);
 
@@ -180,12 +190,14 @@ test.suite('MedoroClient', () => {
       );
 
       const key = '/test-key';
-      const result = await client.getObject({ key });
+      const command = new GetObjectCommand({ key });
+      const result = await client.send({ command });
       assert.ok(result.isErr());
       assert.deepStrictEqual(result.error, {
         type: 'api_error',
         message: 'Not Found',
         code: '404',
+        context: 'Not Found'
       });
     });
 
@@ -193,7 +205,8 @@ test.suite('MedoroClient', () => {
       fetchStub.mock.mockImplementationOnce(() => Promise.reject(new TypeError('Network error during GET')));
 
       const key = '/test-key';
-      const result = await client.getObject({ key });
+      const command = new GetObjectCommand({ key });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, err({
         type: 'network_error',
         message: 'Network error during GET: Network error during GET',
@@ -218,7 +231,8 @@ test.suite('MedoroClient', () => {
         )));
 
       const key = '/test-key';
-      const result = await client.deleteObject({ key });
+      const command = new DeleteObjectCommand({ key });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, ok(mockDeleteResponse.data));
       assert.strictEqual(fetchStub.mock.callCount(), 1);
 
@@ -242,11 +256,13 @@ test.suite('MedoroClient', () => {
       );
 
       const key = 'test-key';
-      const result = await client.deleteObject({ key });
+      const command = new DeleteObjectCommand({ key });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, err({
         type: 'api_error',
         message: 'Forbidden',
         code: '403',
+        context: 'Forbidden'
       }));
     });
 
@@ -256,7 +272,8 @@ test.suite('MedoroClient', () => {
       );
 
       const key = 'test-key';
-      const result = await client.deleteObject({ key });
+      const command = new DeleteObjectCommand({ key });
+      const result = await client.send({ command });
       assert.deepStrictEqual(result, err({
         type: 'network_error',
         message: 'Network error during DELETE: Network error during DELETE',
