@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 
 const BucketConfigSchema = z.object({
     v1: z.object({
-        allowedPublicKeys: z.record(z.number(), z.object({ alg: z.literal('ed25519'), contentBase64: z.string().min(1), label: z.string().min(1) })),
+        allowedPublicKeys: z.record(z.string(), z.object({ alg: z.literal('ed25519'), contentBase64: z.string().min(1), label: z.string().min(1) })),
     }),
 });
 
