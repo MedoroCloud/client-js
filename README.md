@@ -109,13 +109,16 @@ if (result.isOk()) {
 
 ### `createSignedUrl` - Generating Signed URLs
 
-Medoro allows you to generate signed URLs for direct client-side interaction (e.g., browser to Medoro uploads). The `createSignedUrl` method takes a command object and returns a URL that includes the necessary signature for authentication.
+Medoro allows you to generate signed URLs for direct client-side interaction (e.g., browser to Medoro uploads). The `createSignedUrl` method takes a command object and returns a URL that includes the necessary signature for authentication. You can also specify an expiration time for the signed URL using the `expiresInSeconds` parameter (default is 60 seconds).
+
+The `expiresInSeconds` parameter (if specified) must be between 10 and 604800 seconds (1 week).
 
 ```javascript
 const key = '/my-image.jpg';
 const command = new GetObjectCommand({ key });
 
-const result = await client.createSignedUrl({ command });
+// Generate a signed URL that expires in 5 minutes (300 seconds)
+const result = await client.createSignedUrl({ command, expiresInSeconds: 300 });
 
 if (result.isOk()) {
   const signedUrl = result.value.signedUrl;
