@@ -6,7 +6,7 @@ The `@medoro/client` is a JavaScript SDK designed to facilitate interaction with
 
 ## Features
 
-- **Object Management**: Easily `putObject`, `getObject`, and `deleteObject` from Medoro storage.
+- **Object Management**: Use command objects (`PutObjectCommand`, `GetObjectCommand`, `DeleteObjectCommand`) with a unified `send` method to interact with Medoro storage.
 - **Authentication**: Supports Ed25519 key pair-based signing for secure requests.
 - **Structured Error Handling**: Leverages `neverthrow`'s `Result` and `ResultAsync` types for explicit and type-safe error management.
 - **API Response Validation**: Integrates `Zod` schemas to ensure API responses conform to expected structures, providing robust data validation.
@@ -44,13 +44,17 @@ const client = new MedoroDataplaneClient({
 });
 ```
 
-### `putObject` - Uploading an Object
+### Sending Commands
+
+All interactions with the Medoro API are performed by creating a command object and passing it to the `client.send()` method. This unifies the API and provides a clear structure for requests.
+
+#### `PutObjectCommand` - Uploading an Object
 
 ```javascript
 const key = '/my-document.txt';
 const content = 'Hello Medoro! This is my first object.';
 
-const result = await client.putObject({
+const command = new PutObjectCommand({
   key,
   content,
   policy: {
@@ -61,6 +65,8 @@ const result = await client.putObject({
   },
 });
 
+const result = await client.send({ command });
+
 if (result.isOk()) {
   console.log('Object uploaded successfully:', result.value);
 } else {
@@ -68,14 +74,15 @@ if (result.isOk()) {
 }
 ```
 
-### `getObject` - Retrieving an Object (Authenticated)
+#### `GetObjectCommand` - Retrieving an Object (Authenticated)
 
-The `getObject` method always attempts to sign the request, thus requiring the client to be initialized with a `privateKey` and `keyId`.
+The `GetObjectCommand` always attempts to sign the request, thus requiring the client to be initialized with a `privateKey` and `keyId`.
 
 ```javascript
 const key = '/my-document.txt';
 
-const result = await client.getObject({ key });
+const command = new GetObjectCommand({ key });
+const result = await client.send({ command });
 
 if (result.isOk()) {
   const response = result.value; // This is a Response object
@@ -85,17 +92,61 @@ if (result.isOk()) {
 }
 ```
 
-### `deleteObject` - Deleting an Object
+#### `DeleteObjectCommand` - Deleting an Object
 
 ```javascript
 const key = '/my-document.txt';
 
-const result = await client.deleteObject({ key });
+const command = new DeleteObjectCommand({ key });
+const result = await client.send({ command });
 
 if (result.isOk()) {
   console.log('Object deleted successfully:', result.value);
 } else {
   console.error('Failed to delete object:', result.error);
+}
+```
+
+### `createSignedUrl` - Generating Signed URLs
+
+Medoro allows you to generate signed URLs for direct client-side interaction (e.g., browser to Medoro uploads). The `createSignedUrl` method takes a command object and returns a URL that includes the necessary signature for authentication.
+
+```javascript
+const key = '/my-image.jpg';
+const command = new GetObjectCommand({ key });
+
+const result = await client.createSignedUrl({ command });
+
+if (result.isOk()) {
+  const signedUrl = result.value.signedUrl;
+  console.log('Generated Signed URL:', signedUrl.toString());
+  // You can now use this URL for direct access, e.g., in an <img> tag or a fetch request
+} else {
+  console.error('Failed to generate signed URL:', result.error);
+}
+
+// For a PutObjectCommand, the signed URL would be used for a direct PUT request
+const uploadKey = '/my-document-for-upload.txt';
+const uploadCommand = new PutObjectCommand({
+  key: uploadKey,
+  content: 'Content to upload',
+  policy: {
+    apiPutV1: {
+      conditions: { 'Content-Length': { lte: 1024 }, 'Content-Type': 'text/plain' },
+      accessControl: 'public',
+    },
+  },
+});
+
+const uploadResult = await client.createSignedUrl({ command: uploadCommand });
+
+if (uploadResult.isOk()) {
+  const signedUploadUrl = uploadResult.value.signedUrl;
+  console.log('Generated Signed Upload URL:', signedUploadUrl.toString());
+  // Use this URL with fetch to perform a direct PUT upload
+  // await fetch(signedUploadUrl, { method: 'PUT', body: uploadCommand.content });
+} else {
+  console.error('Failed to generate signed upload URL:', uploadResult.error);
 }
 ```
 
@@ -111,7 +162,7 @@ Example error structure:
 {
   type: 'network_error',
   message: 'Network request failed',
-  // ... other properties like 'code' or 'context'
+  // ... other properties like 'code', 'context', or 'details'
 }
 ```
 
