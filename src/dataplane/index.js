@@ -170,9 +170,17 @@ export class MedoroDataplaneClient {
    * Signs a request with the provided key pair using http-msg-sig and returns the signed URL.
    * @param {object} params
    * @param {MedoroDataplaneCommand} params.command - The Command object to sign.
+   * @param {number} [params.expiresInSeconds] - The number of seconds until the signature expires.
    * @returns {Promise<Result<{ signedUrl: URL }, MedoroDataplaneClientError>>}
    */
-  async createSignedUrl({ command }) {
+  async createSignedUrl({ command, expiresInSeconds = 60 }) {
+    if (expiresInSeconds < 10 || expiresInSeconds > 604800) {
+      return err({
+        type: 'validation',
+        message: 'expiresInSeconds must be between 10 and 604800',
+      });
+    }
+
     const url = new URL(command.key, this.#origin);
 
     /** @type {(string | { component: '@query-param'; parameters: { name: string } })[]} */
@@ -185,7 +193,7 @@ export class MedoroDataplaneClient {
     const resultOfSigning = await createSignatureForRequest({
       signatureInputs,
       signatureLabel: 'medoro',
-      additionalParams: { keyid: this.#keyId, alg: 'ed25519', created: Math.floor(Date.now() / 1000) },
+      additionalParams: { keyid: this.#keyId, alg: 'ed25519', created: Math.floor(Date.now() / 1000), expires: Math.floor(Date.now() / 1000) + expiresInSeconds },
       request: {
         url,
         headers: command.headers,

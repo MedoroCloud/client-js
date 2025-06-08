@@ -70,10 +70,12 @@ export class MedoroDataplaneClient {
      * Signs a request with the provided key pair using http-msg-sig and returns the signed URL.
      * @param {object} params
      * @param {MedoroDataplaneCommand} params.command - The Command object to sign.
+     * @param {number} [params.expiresInSeconds] - The number of seconds until the signature expires.
      * @returns {Promise<Result<{ signedUrl: URL }, MedoroDataplaneClientError>>}
      */
-    createSignedUrl({ command }: {
+    createSignedUrl({ command, expiresInSeconds }: {
         command: MedoroDataplaneCommand;
+        expiresInSeconds?: number | undefined;
     }): Promise<Result<{
         signedUrl: URL;
     }, MedoroDataplaneClientError>>;
