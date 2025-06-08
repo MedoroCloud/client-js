@@ -1,7 +1,7 @@
 import { z } from 'zod/v4';
 declare const BucketConfigSchema: z.ZodObject<{
     v1: z.ZodObject<{
-        allowedPublicKeys: z.ZodRecord<z.ZodNumber, z.ZodObject<{
+        allowedPublicKeys: z.ZodRecord<z.ZodString, z.ZodObject<{
             alg: z.ZodLiteral<"ed25519">;
             contentBase64: z.ZodString;
             label: z.ZodString;
