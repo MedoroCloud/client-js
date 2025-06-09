@@ -1,7 +1,6 @@
 import { Result, ResultAsync, ok, err } from 'neverthrow';
 import { createSignatureForRequest } from 'http-msg-sig';
 import { z } from 'zod/v4';
-import { request } from 'http';
 
 // Schema for success responses
 const ApiSuccessResponseSchema = z.object({
