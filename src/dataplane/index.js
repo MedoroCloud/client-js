@@ -93,7 +93,7 @@ export class PutObjectCommand extends MedoroDataplaneCommand {
   }
 
   /**
-   * @type {Blob | ArrayBuffer | string}
+   * @type {Blob | ArrayBuffer | string | undefined}
    */
   #content;
 
@@ -105,7 +105,7 @@ export class PutObjectCommand extends MedoroDataplaneCommand {
    * @param {object} params
    * @param {string} params.key - The key (path) for the request.
    * @param {import('../lib/schemas').ApiPutRequestValidationPolicy} params.policy - The validation policy for the request.
-   * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
+   * @param {Blob | ArrayBuffer | string} [params.content] - The content of the object.
    */
   constructor({ key, policy, content }) {
     super({ key, method: 'PUT' });
