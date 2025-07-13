@@ -3,12 +3,12 @@ export class PutObjectCommand extends MedoroDataplaneCommand {
      * @param {object} params
      * @param {string} params.key - The key (path) for the request.
      * @param {import('../lib/schemas').ApiPutRequestValidationPolicy} params.policy - The validation policy for the request.
-     * @param {Blob | ArrayBuffer | string} params.content - The content of the object.
+     * @param {Blob | ArrayBuffer | string} [params.content] - The content of the object.
      */
     constructor({ key, policy, content }: {
         key: string;
         policy: import("../lib/schemas").ApiPutRequestValidationPolicy;
-        content: Blob | ArrayBuffer | string;
+        content?: string | Blob | ArrayBuffer | undefined;
     });
     get policy(): {
         apiPutV1: {
@@ -28,7 +28,7 @@ export class PutObjectCommand extends MedoroDataplaneCommand {
             accessControl: "public" | "private";
         };
     };
-    get content(): string | Blob | ArrayBuffer;
+    get content(): string | Blob | ArrayBuffer | undefined;
     #private;
 }
 export class GetObjectCommand extends MedoroDataplaneCommand {
